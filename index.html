@@ -111,9 +111,11 @@ button{font:inherit;color:inherit}
 .wtable .mb i{display:block;height:100%;border-radius:2px}
 
 /* ---------- Week calendar ---------- */
-.week{margin-top:16px;--whr:44px}
-.wk-head{position:sticky;top:var(--topbar-h,112px);z-index:10;display:grid;grid-template-columns:38px repeat(7,minmax(0,1fr));
+.week{margin-top:16px;--whr:44px;--wcol:84px}
+.wk-head{position:sticky;top:var(--topbar-h,112px);z-index:10;display:grid;grid-template-columns:38px minmax(0,1fr);
   margin-inline:-16px;padding:6px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.wk-head-vp{overflow:hidden}
+.wk-head-track{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));width:max(100%,calc(7 * var(--wcol)));will-change:transform}
 .wk-day{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:1px;padding:2px 0;border-radius:10px;cursor:pointer;min-width:0}
 .wk-day:active{background:var(--surface-2)}
 .wk-day .dow{font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
@@ -124,13 +126,16 @@ button{font:inherit;color:inherit}
 .wk-body{display:grid;grid-template-columns:38px minmax(0,1fr);padding-block:10px}
 .wk-hours{position:relative}
 .wk-hours span{position:absolute;right:6px;transform:translateY(-50%);font-size:10px;font-weight:500;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
-.wk-cols{position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-left:1px solid var(--line);border-bottom:1px solid var(--hour);
+.wk-scroll{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.wk-scroll::-webkit-scrollbar{display:none}
+.wk-cols{position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));width:max(100%,calc(7 * var(--wcol)));border-left:1px solid var(--line);border-bottom:1px solid var(--hour);
   background-image:linear-gradient(var(--hour) 1px,transparent 1px);background-size:100% var(--whr)}
-.wk-col{position:relative;border-right:1px solid var(--half);cursor:copy;min-width:0}
+.wk-col{position:relative;border-right:1px solid var(--half);cursor:copy;min-width:0;scroll-snap-align:start}
 .wk-col.is-today{background:color-mix(in srgb,var(--now) 5%,transparent)}
-.wblock{position:absolute;border:0;border-radius:5px;padding:2px 3px;font-size:10px;line-height:1.15;font-weight:650;text-align:left;overflow:hidden;cursor:pointer;
+.wblock{position:absolute;border:0;border-radius:6px;padding:3px 5px;font-size:11px;line-height:1.15;font-weight:650;text-align:left;overflow:hidden;cursor:pointer;
   -webkit-hyphens:auto;hyphens:auto;overflow-wrap:break-word;box-shadow:inset 0 0 0 1px var(--block-edge);display:block}
 .wblock:active{filter:brightness(.94)}
+.wblock .wr{display:block;font-weight:500;font-size:10px;opacity:.85;margin-top:1px;font-variant-numeric:tabular-nums;-webkit-hyphens:none;hyphens:none}
 
 /* ---------- Timeline (day) ---------- */
 .timeline{position:relative;display:grid;grid-template-columns:48px 1fr;margin-top:16px;padding-block:10px}
@@ -250,10 +255,10 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
     <main class="view" id="weekView" hidden>
       <section class="summary" id="weekSummary" aria-live="polite"></section>
       <section class="week" aria-label="Week calendar">
-        <div class="wk-head" id="wkHead"></div>
+        <div class="wk-head" id="wkHead"><span></span><div class="wk-head-vp"><div class="wk-head-track" id="wkHeadTrack"></div></div></div>
         <div class="wk-body">
           <div class="wk-hours" id="wkHours"></div>
-          <div class="wk-cols" id="wkCols"></div>
+          <div class="wk-scroll" id="wkScroll"><div class="wk-cols" id="wkCols"></div></div>
         </div>
       </section>
     </main>
@@ -309,8 +314,8 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
   </div>
   <div class="setting"><span>Week starts on</span>
     <div class="seg" id="wsSeg" role="group" aria-label="Week starts on">
-      <button type="button" data-ws="0" aria-pressed="true">Sunday</button>
-      <button type="button" data-ws="1" aria-pressed="false">Monday</button>
+      <button type="button" data-ws="1" aria-pressed="true">Monday</button>
+      <button type="button" data-ws="0" aria-pressed="false">Sunday</button>
     </div>
   </div>
   <p class="menu-note" id="statsNote"></p>
@@ -391,7 +396,7 @@ let catTouched = false;
 /* ---------- Weeks ---------- */
 const WHR = 44;            // week view hour height; matches --whr in CSS
 let wkLo = 0;              // first minute shown in the week grid
-const weekStartOf = s => { const d = parseYmd(s), ws = db.weekStart === 1 ? 1 : 0; d.setDate(d.getDate() - (d.getDay() - ws + 7) % 7); return ymd(d); };
+const weekStartOf = s => { const d = parseYmd(s), ws = db.weekStart === 0 ? 0 : 1; d.setDate(d.getDate() - (d.getDay() - ws + 7) % 7); return ymd(d); };
 const weekDays = s => { const ws = weekStartOf(s); return Array.from({length:7}, (_,i) => addDays(ws, i)); };
 const minsOf = x => Math.min(x.end, 1440) - x.start;
 const hrs = m => m < 60 ? m + "m" : (Math.round(m/6)/10) + "h";
@@ -550,7 +555,7 @@ function renderWeek(){
   wkLo = lo;
   const height = (hi - lo)/60*WHR;
 
-  $("wkHead").innerHTML = `<span></span>` + days.map((d,i) => {
+  $("wkHeadTrack").innerHTML = days.map((d,i) => {
     const dt = parseYmd(d), m = per[i].reduce((a,x) => a + minsOf(x), 0);
     const label = dt.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}) + (m ? `, ${dur(m)} logged` : "") + ". Open day";
     return `<button type="button" class="wk-day${d===t?" is-today":""}" data-day="${d}" aria-label="${label}"><span class="dow">${dt.toLocaleDateString(undefined,{weekday:"short"}).slice(0,3)}</span><span class="dnum">${dt.getDate()}</span><span class="dtot">${m ? hrs(m) : ""}</span></button>`;
@@ -569,10 +574,15 @@ function renderWeek(){
       const s = Math.max(x.start, lo), e = Math.min(x.end, hi);
       if (e <= s) return "";
       const top = (s - lo)/60*WHR, h = Math.max((e - s)/60*WHR - 2, 10);
-      return `<button type="button" class="wblock" data-id="${x.id}" style="top:${top+1}px;height:${h}px;left:calc(${col} * 100% / ${n} + 1px);width:calc(100% / ${n} - 2px);background:${c.color};color:${c.fg}" aria-label="${esc(x.title)}, ${esc(c.name)}, ${fmtRange(x.start, x.end)}">${h >= 14 ? esc(x.title) : ""}</button>`;
+      return `<button type="button" class="wblock" data-id="${x.id}" style="top:${top+1}px;height:${h}px;left:calc(${col} * 100% / ${n} + 1px);width:calc(100% / ${n} - 2px);background:${c.color};color:${c.fg}" aria-label="${esc(x.title)}, ${esc(c.name)}, ${fmtRange(x.start, x.end)}">${h >= 14 ? esc(x.title) : ""}${h >= 40 ? `<span class="wr">${fmtRange(x.start, x.end)}</span>` : ""}</button>`;
     }).join("") +
     (d === t ? `<div class="now" style="top:${(nowMin()-lo)/60*WHR}px"></div>` : "") + `</div>`).join("");
+  syncWkHead();
 }
+// The day-header row can't live inside the horizontal scroller (it would lose its vertical stickiness), so it follows the scroller.
+function syncWkHead(){ $("wkHeadTrack").style.transform = `translateX(${-$("wkScroll").scrollLeft}px)`; }
+$("wkScroll").addEventListener("scroll", syncWkHead, {passive:true});
+let wkLand = null;         // "end" when arriving at a week by swiping back past its first day
 
 /* ---------- Rendering & navigation ---------- */
 function syncTopbarH(){ document.documentElement.style.setProperty("--topbar-h", $("topbar").offsetHeight + "px"); }
@@ -588,7 +598,14 @@ function render(){
 }
 
 function scrollToFocus(){
-  if (view === "week"){ window.scrollTo({top:0, behavior:"auto"}); return; }
+  if (view === "week"){
+    window.scrollTo({top:0, behavior:"auto"});
+    const sc = $("wkScroll"), i = weekDays(day).indexOf(today()), colW = $("wkCols").offsetWidth / 7;
+    sc.scrollLeft = wkLand === "end" ? sc.scrollWidth : i > 0 ? (i - 1) * colW : 0;
+    wkLand = null;
+    syncWkHead();
+    return;
+  }
   const H = hourPx(), list = entries(day);
   let m;
   if (day === today()) m = nowMin() - 150;
@@ -811,13 +828,20 @@ $("viewSeg").addEventListener("click", e => { const b = e.target.closest("button
 let tx = null;
 $("views").addEventListener("touchstart", e => {
   if (e.touches.length !== 1) { tx = null; return; }
-  tx = {x:e.touches[0].clientX, y:e.touches[0].clientY, t:Date.now()};
+  // Inside the week scroller, a swipe only changes week once the scroller is already at that edge.
+  const sc = e.target.closest("#wkScroll, #wkHead") ? $("wkScroll") : null;
+  tx = {x:e.touches[0].clientX, y:e.touches[0].clientY, t:Date.now(),
+        edge: sc && {start: sc.scrollLeft <= 1, end: sc.scrollLeft >= sc.scrollWidth - sc.clientWidth - 1}};
 }, {passive:true});
 $("views").addEventListener("touchend", e => {
   if (!tx || openSheetEl) return;
   const t = e.changedTouches[0], dx = t.clientX - tx.x, dy = t.clientY - tx.y, dt = Date.now() - tx.t;
-  tx = null;
-  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)*2 && dt < 600) step(dx < 0 ? 1 : -1);
+  const edge = tx.edge; tx = null;
+  if (!(Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)*2 && dt < 600)) return;
+  const dir = dx < 0 ? 1 : -1;
+  if (edge && !(dir > 0 ? edge.end : edge.start)) return;
+  if (view === "week" && dir < 0 && edge) wkLand = "end";
+  step(dir);
 }, {passive:true});
 
 $("prevDay").addEventListener("click", () => step(-1));
@@ -832,7 +856,7 @@ setInterval(renderNow, 30000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) renderNow(); });
 
 /* ---------- Settings ---------- */
-function syncWsSeg(){ document.querySelectorAll("#wsSeg button").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.ws) === (db.weekStart === 1 ? 1 : 0)))); }
+function syncWsSeg(){ document.querySelectorAll("#wsSeg button").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.ws) === (db.weekStart === 0 ? 0 : 1)))); }
 $("wsSeg").addEventListener("click", e => {
   const b = e.target.closest("button[data-ws]"); if (!b) return;
   db.weekStart = Number(b.dataset.ws); save(); syncWsSeg(); render();
