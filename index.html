@@ -164,11 +164,27 @@ button{font:inherit;color:inherit}
 .view.inR{animation:inR .22s ease-out}
 
 /* ---------- FAB ---------- */
-.fab{position:fixed;right:max(20px,calc(50vw - 300px));bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:30;
-  height:58px;padding:0 22px 0 18px;border:0;border-radius:29px;background:var(--primary);color:var(--on-primary);
+.dock{position:fixed;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;max-width:640px;margin:0 auto;padding-inline:16px;
+  display:flex;gap:10px;justify-content:flex-end;align-items:center;pointer-events:none}
+.dock > *{pointer-events:auto}
+.fab{flex:none;height:58px;padding:0 22px 0 18px;border:0;border-radius:29px;background:var(--primary);color:var(--on-primary);
   display:flex;align-items:center;gap:8px;font-weight:650;font-size:17px;box-shadow:var(--shadow);cursor:pointer}
 .fab svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.6;fill:none;stroke-linecap:round}
 .fab:active{transform:scale(.97)}
+.dock.has-live .fab{width:58px;padding:0;justify-content:center}
+.dock.has-live .fab-lbl{display:none}
+.live{flex:1;min-width:0;display:flex;align-items:center;gap:4px;height:58px;padding-right:7px;border-radius:18px;background:var(--surface);box-shadow:var(--shadow),inset 0 0 0 1px var(--line)}
+.live-main{flex:1;min-width:0;display:flex;align-items:center;gap:10px;height:100%;border:0;background:transparent;text-align:left;padding:0 6px 0 14px;cursor:pointer;border-radius:18px}
+.live-dot{position:relative;width:12px;height:12px;border-radius:50%;flex:none}
+.live-dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid currentColor;animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.5);opacity:.8}100%{transform:scale(1.3);opacity:0}}
+.live-text{flex:1;min-width:0;display:flex;flex-direction:column}
+.live-title{font-weight:650;font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-time{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums}
+.live-end{flex:none;border:0;height:44px;padding:0 16px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer}
+.live-end:active{filter:brightness(.92)}
+.block.is-live,.wblock.is-live{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.24) 0 6px,transparent 6px 12px)}
 
 /* ---------- Sheets ---------- */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;opacity:0;transition:opacity .22s}
@@ -210,6 +226,9 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
 .btn{min-height:52px;border:0;border-radius:14px;font-size:17px;font-weight:650;cursor:pointer;padding:0 18px}
 .btn.primary{flex:1;background:var(--primary);color:var(--on-primary)}
 .btn.danger{background:transparent;color:var(--danger);box-shadow:inset 0 0 0 1px var(--line)}
+.btn.secondary{background:var(--surface-2);color:var(--ink)}
+#modeSeg{margin:0}
+.note{margin:0;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px;line-height:1.45}
 .btn.plain{width:100%;background:var(--surface-2);text-align:left;display:flex;align-items:center;justify-content:space-between}
 .menu-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .menu-note{font-size:14px;color:var(--muted);margin:10px 0 0;line-height:1.5}
@@ -217,7 +236,7 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
 /* ---------- Toast ---------- */
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);z-index:60;opacity:0;pointer-events:none;
   background:var(--primary);color:var(--on-primary);border-radius:12px;padding:10px 12px 10px 16px;display:flex;gap:14px;align-items:center;
-  font-size:15px;font-weight:550;box-shadow:var(--shadow);transition:opacity .18s,transform .18s;max-width:calc(100vw - 32px)}
+  font-size:15px;font-weight:550;box-shadow:var(--shadow);transition:opacity .18s,transform .18s;width:max-content;max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast button{border:0;background:transparent;color:inherit;font-weight:750;text-decoration:underline;padding:4px 6px;cursor:pointer}
 
@@ -265,7 +284,16 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
   </div>
 </div>
 
-<button class="fab" id="fab" aria-label="Log an activity"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Log</button>
+<div class="dock" id="dock">
+  <div class="live" id="live" hidden>
+    <button type="button" class="live-main" id="liveOpen" aria-label="Edit the activity in progress">
+      <span class="live-dot" id="liveDot"></span>
+      <span class="live-text"><span class="live-title" id="liveTitle"></span><span class="live-sub"><span class="live-time" id="liveTime"></span> · <span id="liveSub"></span></span></span>
+    </button>
+    <button type="button" class="live-end" id="liveEnd">End</button>
+  </div>
+  <button class="fab" id="fab" aria-label="Log an activity"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="fab-lbl">Log</span></button>
+</div>
 
 <div class="scrim" id="scrim" hidden></div>
 
@@ -274,19 +302,24 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
   <div class="sheet-head">
     <div>
       <h2 id="entryTitle">New entry</h2>
-      <label class="sheet-date" for="fDate"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span id="fDateLbl">Today</span><input type="date" id="fDate" aria-label="Day of this entry"></label>
+      <label class="sheet-date" for="fDate" id="fDateWrap"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span id="fDateLbl">Today</span><input type="date" id="fDate" aria-label="Day of this entry"></label>
     </div>
     <button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <form id="entryForm" novalidate>
+    <div class="seg" id="modeSeg" role="group" aria-label="How to log">
+      <button type="button" data-mode="past" aria-pressed="true">Log past</button>
+      <button type="button" data-mode="start" aria-pressed="false">Start now</button>
+    </div>
+    <p class="note" id="runNote" hidden></p>
     <label class="field"><span class="lbl">What did you do?</span>
       <input type="text" id="fTitle" list="titleList" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" placeholder="e.g. Chem problem set">
     </label>
     <datalist id="titleList"></datalist>
     <div class="field"><span class="lbl">Type</span><div class="cats" id="catGrid"></div></div>
     <div class="times">
-      <label class="field"><span class="lbl">From</span><input type="time" id="fStart" step="300"></label>
-      <label class="field"><span class="lbl">To</span><input type="time" id="fEnd" step="300"></label>
+      <label class="field"><span class="lbl" id="fromLbl">From</span><input type="time" id="fStart" step="300"></label>
+      <label class="field" id="toField"><span class="lbl">To</span><input type="time" id="fEnd" step="300"></label>
     </div>
     <div class="quick" id="quick" aria-label="Set length">
       <button type="button" data-m="15">15m</button><button type="button" data-m="30">30m</button><button type="button" data-m="45">45m</button>
@@ -296,6 +329,7 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
     <p class="err" id="formErr" hidden></p>
     <div class="actions">
       <button type="button" class="btn danger" id="delBtn">Delete</button>
+      <button type="button" class="btn secondary" id="altBtn" hidden>Save</button>
       <button type="submit" class="btn primary" id="saveBtn">Save</button>
     </div>
   </form>
@@ -393,6 +427,32 @@ let editDay = null;        // day the entry being edited lives on
 let selCat = null;
 let catTouched = false;
 
+/* ---------- Timer ---------- */
+// db.running = {title, cat, day, start}. It is a single slot, so only one activity can ever be in progress.
+const LIVE = "__live";
+let sheetMode = "past";    // past | edit | start | running
+let pastVals = null;       // times the "Log past" tab had before switching to "Start now"
+const runStart = r => { const d = parseYmd(r.day); d.setMinutes(r.start); return d; };
+const runMins = r => Math.floor((Date.now() - runStart(r))/60000);
+function liveEntry(d){
+  const r = db.running;
+  if (!r || r.day !== d) return null;
+  return {id:LIVE, title:r.title, cat:r.cat, start:r.start, end:r.start + clamp(runMins(r), 1, 1440), live:true};
+}
+const withLive = d => { const l = liveEntry(d); return l ? entries(d).concat(l) : entries(d); };
+// Turns the running activity into a logged entry ending at `at` (a Date).
+function endRunning(at){
+  const r = db.running; if (!r) return null;
+  db.running = null;
+  const mins = Math.min(Math.floor((at - runStart(r))/60000), 1440);
+  if (mins < 1) return {r};
+  const entry = {id:uid(), title:r.title, cat:r.cat, start:r.start, end:r.start + mins};
+  const list = db.days[r.day] || (db.days[r.day] = []);
+  list.push(entry); list.sort((a,b) => a.start - b.start);
+  return {r, entry};
+}
+const restore = snap => () => { db = JSON.parse(snap); save(); render(); };
+
 /* ---------- Weeks ---------- */
 const WHR = 44;            // week view hour height; matches --whr in CSS
 let wkLo = 0;              // first minute shown in the week grid
@@ -443,7 +503,7 @@ function renderHeader(){
 
 /* ---------- Day summary ---------- */
 function renderSummary(){
-  const list = entries(day);
+  const list = withLive(day);
   const el = $("summary");
   if (!list.length){
     el.innerHTML = `<div class="sum-head"><span class="sum-total">0h</span><span class="sum-count">nothing logged</span></div>
@@ -484,16 +544,16 @@ function layout(list){
 function renderGrid(){
   const g = $("grid"), H = hourPx();
   const frag = document.createDocumentFragment();
-  layout(entries(day)).forEach(({x, col, cols}) => {
+  layout(withLive(day)).forEach(({x, col, cols}) => {
     const c = CAT[x.cat] || CAT.misc;
     const end = Math.min(x.end, 1440);
     const top = x.start/60*H, h = Math.max((end - x.start)/60*H - 2, 16);
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "block" + (h < 38 ? " short" : "") + (h < 20 ? " tiny" : "");
+    b.className = "block" + (h < 38 ? " short" : "") + (h < 20 ? " tiny" : "") + (x.live ? " is-live" : "");
     b.dataset.id = x.id;
     b.style.cssText = `top:${top+1}px;height:${h}px;left:calc(${col} * (100% - 6px) / ${cols} + 4px);width:calc((100% - 6px) / ${cols} - 3px);background:${c.color};color:${c.fg}`;
-    const range = fmtRange(x.start, x.end) + (x.end > 1440 ? " (+1)" : "");
+    const range = x.live ? fmt(x.start) + "–now" : fmtRange(x.start, x.end) + (x.end > 1440 ? " (+1)" : "");
     b.setAttribute("aria-label", `${x.title}, ${c.name}, ${range}`);
     b.innerHTML = `<span class="t">${esc(x.title)}</span><span class="r">${range}${h >= 56 && x.title !== c.name ? " · " + esc(c.name) : ""}</span>`;
     frag.appendChild(b);
@@ -545,7 +605,7 @@ function renderWeekSummary(days, per, t){
 
 function renderWeek(){
   const days = weekDays(day), t = today();
-  const per = days.map(d => entries(d));
+  const per = days.map(withLive);
   renderWeekSummary(days, per, t);
 
   // Show 7 AM–10 PM, stretched to fit any entry (and the current time) outside that.
@@ -574,7 +634,7 @@ function renderWeek(){
       const s = Math.max(x.start, lo), e = Math.min(x.end, hi);
       if (e <= s) return "";
       const top = (s - lo)/60*WHR, h = Math.max((e - s)/60*WHR - 2, 10);
-      return `<button type="button" class="wblock" data-id="${x.id}" style="top:${top+1}px;height:${h}px;left:calc(${col} * 100% / ${n} + 1px);width:calc(100% / ${n} - 2px);background:${c.color};color:${c.fg}" aria-label="${esc(x.title)}, ${esc(c.name)}, ${fmtRange(x.start, x.end)}">${h >= 14 ? esc(x.title) : ""}${h >= 40 ? `<span class="wr">${fmtRange(x.start, x.end)}</span>` : ""}</button>`;
+      return `<button type="button" class="wblock${x.live ? " is-live" : ""}" data-id="${x.id}" style="top:${top+1}px;height:${h}px;left:calc(${col} * 100% / ${n} + 1px);width:calc(100% / ${n} - 2px);background:${c.color};color:${c.fg}" aria-label="${esc(x.title)}, ${esc(c.name)}, ${fmtRange(x.start, x.end)}">${h >= 14 ? esc(x.title) : ""}${h >= 40 ? `<span class="wr">${fmtRange(x.start, x.end)}</span>` : ""}</button>`;
     }).join("") +
     (d === t ? `<div class="now" style="top:${(nowMin()-lo)/60*WHR}px"></div>` : "") + `</div>`).join("");
   syncWkHead();
@@ -594,8 +654,29 @@ function render(){
   $("weekView").hidden = view !== "week";
   if (view === "day"){ renderSummary(); renderGrid(); } else renderWeek();
   refreshTitleList();
+  renderDock();
   syncTopbarH();
 }
+
+function renderDock(){
+  const r = db.running;
+  $("dock").classList.toggle("has-live", !!r);
+  $("live").hidden = !r;
+  if (!r) return;
+  const c = CAT[r.cat] || CAT.misc;
+  $("liveDot").style.cssText = `background:${c.color};color:${c.color}`;
+  $("liveTitle").textContent = r.title;
+  $("liveSub").textContent = `${c.name} · since ${fmt(r.start)}`;
+  $("liveEnd").style.cssText = `background:${c.color};color:${c.fg}`;
+  tickDock();
+}
+function tickDock(){
+  const r = db.running; if (!r) return;
+  const sec = Math.max(0, Math.floor((Date.now() - runStart(r))/1000));
+  const h = Math.floor(sec/3600), m = Math.floor(sec/60) % 60;
+  $("liveTime").textContent = (h ? h + ":" + pad(m) : m) + ":" + pad(sec % 60);
+}
+setInterval(tickDock, 1000);
 
 function scrollToFocus(){
   if (view === "week"){
@@ -641,6 +722,7 @@ function setView(v, d){
 let openSheetEl = null;
 function openSheet(el){
   closeSheet(true);
+  $("toast").classList.remove("show");
   openSheetEl = el;
   const scrim = $("scrim");
   scrim.hidden = false; el.hidden = false;
@@ -696,8 +778,50 @@ function setFormDate(d){ $("fDate").value = d; $("fDateLbl").textContent = dayNa
 $("fDate").addEventListener("change", e => { if (e.target.value) setFormDate(e.target.value); else setFormDate(editDay || day); });
 $("fDate").addEventListener("click", e => { try { e.target.showPicker && e.target.showPicker(); } catch(_){} });
 
+function applyMode(){
+  const m = sheetMode, timer = m === "start" || m === "running", r = db.running;
+  $("modeSeg").hidden = !(m === "past" || m === "start");
+  document.querySelectorAll("#modeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+  $("fDateWrap").hidden = m === "start";
+  $("toField").hidden = timer;
+  $("quick").hidden = timer;
+  $("fromLbl").textContent = timer ? "Started at" : "From";
+  const note = $("runNote");
+  note.hidden = !(m === "start" && r);
+  if (m === "start" && r) note.innerHTML = `You're doing <b>${esc(r.title)}</b> (since ${fmt(r.start)}). Starting this ends it at the new start time, so the two never overlap.`;
+  $("delBtn").hidden = !(m === "edit" || m === "running");
+  $("delBtn").textContent = m === "running" ? "Discard" : "Delete";
+  $("altBtn").hidden = m !== "running";
+  $("saveBtn").textContent = {past:"Save", edit:"Save changes", start: r ? "Switch to this" : "Start", running:"End now"}[m];
+  $("entryTitle").textContent = m === "edit" ? "Edit entry" : m === "running" ? "In progress" : "New entry";
+  updateDur();
+}
+$("modeSeg").addEventListener("click", e => {
+  const b = e.target.closest("button[data-mode]"); if (!b || b.dataset.mode === sheetMode) return;
+  if (b.dataset.mode === "start"){
+    pastVals = {d: $("fDate").value, s: $("fStart").value, e: $("fEnd").value};
+    $("fStart").value = toHHMM(nowMin());
+    setFormDate(today());
+  } else if (pastVals){
+    setFormDate(pastVals.d); $("fStart").value = pastVals.s; $("fEnd").value = pastVals.e;
+  }
+  sheetMode = b.dataset.mode;
+  db.entryMode = sheetMode; save();
+  hideErr(); applyMode();
+});
+
 function updateDur(){
   const s = $("fStart").value, e = $("fEnd").value, line = $("durLine");
+  if (sheetMode === "start"){
+    const n = nowMin(), a = s ? toMin(s) : n;
+    line.textContent = a > n ? "" : a === n ? "Starts now" : `Started ${dur(n - a)} ago`;
+    return;
+  }
+  if (sheetMode === "running"){
+    const r = db.running;
+    line.textContent = r && s ? `Running for ${dur(Math.max(0, runMins({...r, start: toMin(s)})))}` : "";
+    return;
+  }
   if (!s || !e){ line.textContent = ""; return; }
   let a = toMin(s), b = toMin(e);
   if (b === a){ line.textContent = ""; return; }
@@ -736,15 +860,26 @@ function defaultsForNew(d){
 function openNew(d, start, end){
   editing = null; editDay = null; catTouched = false;
   const t = start == null ? defaultsForNew(d) : {s:start, e:end};
-  $("entryTitle").textContent = "New entry";
-  setFormDate(d);
+  pastVals = {d, s: toHHMM(t.s), e: toHHMM(t.e)};
+  // "Start now" is only offered by default from the Log button on today.
+  sheetMode = db.entryMode === "start" && start == null && d === today() ? "start" : "past";
+  setFormDate(sheetMode === "start" ? today() : d);
   $("fTitle").value = "";
-  $("fStart").value = toHHMM(t.s);
-  $("fEnd").value = toHHMM(t.e);
+  $("fStart").value = sheetMode === "start" ? toHHMM(nowMin()) : pastVals.s;
+  $("fEnd").value = pastVals.e;
   setCat(db.lastCat && CAT[db.lastCat] ? db.lastCat : null);
-  $("delBtn").hidden = true;
-  $("saveBtn").textContent = "Save";
-  hideErr(); updateDur();
+  hideErr(); applyMode();
+  openSheet($("entrySheet"));
+}
+function openRunning(){
+  const r = db.running; if (!r) return;
+  editing = null; editDay = null; catTouched = true;
+  sheetMode = "running";
+  setFormDate(r.day);
+  $("fTitle").value = r.title;
+  $("fStart").value = toHHMM(r.start);
+  setCat(r.cat);
+  hideErr(); applyMode();
   openSheet($("entrySheet"));
 }
 function openNewAt(d, m){
@@ -756,20 +891,63 @@ function openNewAt(d, m){
 function openEdit(id, d){
   const x = entries(d).find(e => e.id === id); if (!x) return;
   editing = id; editDay = d; catTouched = true;
-  $("entryTitle").textContent = "Edit entry";
+  sheetMode = "edit";
   setFormDate(d);
   $("fTitle").value = x.title;
   $("fStart").value = toHHMM(x.start);
   $("fEnd").value = toHHMM(x.end);
   setCat(x.cat);
-  $("delBtn").hidden = false;
-  $("saveBtn").textContent = "Save changes";
-  hideErr(); updateDur();
+  hideErr(); applyMode();
   openSheet($("entrySheet"));
 }
 
+function submitTimer(endNow){
+  if (!selCat) return showErr("Pick a type.");
+  const sv = $("fStart").value;
+  if (!sv) return showErr("Set a start time.");
+  const s = toMin(sv), title = $("fTitle").value.trim() || CAT[selCat].name;
+  const snap = JSON.stringify(db);
+  if (sheetMode === "start"){
+    const t = today(), at = parseYmd(t);
+    at.setMinutes(s);
+    if (at > new Date()) return showErr("The start time can't be in the future.");
+    let prev = null;
+    if (db.running){
+      if (at <= runStart(db.running)) return showErr(`Pick a time after ${fmt(db.running.start)}, when "${db.running.title}" started.`);
+      prev = endRunning(at);
+    }
+    db.running = {title, cat:selCat, day:t, start:s};
+    db.lastCat = selCat; save();
+    closeSheet();
+    if (!isVisible(t)){ day = t; render(); scrollToFocus(); } else render();
+    toast(prev ? `Ended ${prev.r.title}, started ${title}` : `Started ${title}`, "Undo", restore(snap));
+    return;
+  }
+  const r = db.running;
+  if (!r){ closeSheet(); render(); return; }
+  const at = parseYmd(r.day);
+  at.setMinutes(s);
+  if (at > new Date()) return showErr("The start time can't be in the future.");
+  Object.assign(r, {title, cat:selCat, start:s});
+  db.lastCat = selCat;
+  let res = null;
+  if (endNow) res = endRunning(new Date());
+  save(); closeSheet(); render();
+  if (!endNow) toast("Changes saved");
+  else toast(res.entry ? `Logged ${dur(res.entry.end - res.entry.start)} of ${CAT[res.entry.cat].name}` : "Ended. It was under a minute, so nothing was logged.", "Undo", restore(snap));
+}
+$("altBtn").addEventListener("click", () => submitTimer(false));
+$("liveOpen").addEventListener("click", openRunning);
+$("liveEnd").addEventListener("click", () => {
+  const snap = JSON.stringify(db), res = endRunning(new Date());
+  if (!res) return;
+  save(); render();
+  toast(res.entry ? `Logged ${dur(res.entry.end - res.entry.start)} of ${CAT[res.entry.cat].name}` : "Ended. It was under a minute, so nothing was logged.", "Undo", restore(snap));
+});
+
 $("entryForm").addEventListener("submit", e => {
   e.preventDefault();
+  if (sheetMode === "start" || sheetMode === "running") return submitTimer(true);
   if (!selCat) return showErr("Pick a type.");
   const sv = $("fStart").value, ev = $("fEnd").value;
   if (!sv || !ev) return showErr("Set both a start and an end time.");
@@ -796,6 +974,12 @@ $("entryForm").addEventListener("submit", e => {
 });
 
 $("delBtn").addEventListener("click", () => {
+  if (sheetMode === "running"){
+    const snap = JSON.stringify(db);
+    db.running = null; save(); closeSheet(); render();
+    toast("Timer discarded", "Undo", restore(snap));
+    return;
+  }
   const d = editDay, list = db.days[d] || [];
   const i = list.findIndex(v => v.id === editing); if (i < 0) return;
   const [gone] = list.splice(i, 1);
@@ -811,14 +995,14 @@ $("delBtn").addEventListener("click", () => {
 /* ---------- Timeline interactions ---------- */
 $("grid").addEventListener("click", e => {
   const b = e.target.closest(".block");
-  if (b){ openEdit(b.dataset.id, day); return; }
+  if (b){ b.dataset.id === LIVE ? openRunning() : openEdit(b.dataset.id, day); return; }
   const r = $("grid").getBoundingClientRect();
   openNewAt(day, clamp(Math.floor((e.clientY - r.top)/hourPx()*60/15)*15, 0, 1440-15));
 });
 $("wkCols").addEventListener("click", e => {
   const col = e.target.closest(".wk-col"); if (!col) return;
   const b = e.target.closest(".wblock");
-  if (b){ openEdit(b.dataset.id, col.dataset.day); return; }
+  if (b){ b.dataset.id === LIVE ? openRunning() : openEdit(b.dataset.id, col.dataset.day); return; }
   const r = col.getBoundingClientRect();
   openNewAt(col.dataset.day, clamp(wkLo + Math.floor((e.clientY - r.top)/WHR*60/15)*15, 0, 1440-15));
 });
@@ -852,8 +1036,9 @@ $("datePick").addEventListener("click", e => { try { e.target.showPicker && e.ta
 $("fab").addEventListener("click", () => openNew(view === "week" && weekDays(day).includes(today()) ? today() : day));
 
 window.addEventListener("scroll", () => $("topbar").classList.toggle("scrolled", window.scrollY > 4), {passive:true});
-setInterval(renderNow, 30000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) renderNow(); });
+// While a timer runs, re-render so its block and the totals keep growing.
+setInterval(() => db.running ? render() : renderNow(), 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) db.running ? render() : renderNow(); });
 
 /* ---------- Settings ---------- */
 function syncWsSeg(){ document.querySelectorAll("#wsSeg button").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.ws) === (db.weekStart === 0 ? 0 : 1)))); }
