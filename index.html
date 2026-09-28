@@ -34,6 +34,7 @@
   --scrim:rgba(12,14,18,.36);
   --shadow:0 12px 32px rgba(16,20,28,.16);
   --block-edge:rgba(0,0,0,.07);
+  --win:#D99A00;
   --hr:64px;
   --display:"Bricolage Grotesque",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
@@ -45,6 +46,7 @@
     --line:#2A2E36;--hour:#252930;--half:#191C21;--primary:#EDEFF2;--on-primary:#0E1014;
     --danger:#FF7070;--now:#FF5A5F;--scrim:rgba(0,0,0,.56);--shadow:0 12px 32px rgba(0,0,0,.5);
     --block-edge:rgba(255,255,255,.12);
+    --win:#F2C14E;
     color-scheme:dark;
   }
 }
@@ -53,6 +55,7 @@
   --line:#2A2E36;--hour:#252930;--half:#191C21;--primary:#EDEFF2;--on-primary:#0E1014;
   --danger:#FF7070;--now:#FF5A5F;--scrim:rgba(0,0,0,.56);--shadow:0 12px 32px rgba(0,0,0,.5);
   --block-edge:rgba(255,255,255,.12);
+  --win:#F2C14E;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -229,6 +232,35 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
 .btn.secondary{background:var(--surface-2);color:var(--ink)}
 #modeSeg{margin:0}
 .note{margin:0;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px;line-height:1.45}
+
+/* ---------- Achievements ---------- */
+.ach-btn{position:relative;flex:none;width:52px;height:52px;margin-right:auto;border:0;border-radius:50%;background:var(--surface);color:var(--ink);
+  box-shadow:var(--shadow),inset 0 0 0 1px var(--line);display:grid;place-items:center;cursor:pointer}
+.ach-btn:active{transform:scale(.96)}
+.ach-btn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+.ach-btn.has svg{fill:var(--win);stroke:var(--win)}
+.ach-count{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--primary);color:var(--on-primary);
+  font-size:12px;font-weight:700;line-height:20px;text-align:center;font-variant-numeric:tabular-nums}
+.sheet-sub{font-size:14px;color:var(--muted);margin-top:2px}
+form.win-add{flex-direction:row;gap:8px;margin-top:10px}
+.win-add input{flex:1;min-width:0}
+.win-add .btn{flex:none;min-height:50px}
+.wins{list-style:none;margin:10px 0 4px;padding:0}
+.win{display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px solid var(--line)}
+.win:last-child{border-bottom:0}
+.win-mark{width:18px;height:18px;flex:none;fill:var(--win)}
+input.win-text{flex:1;min-width:0;min-height:46px;padding:0;border-radius:0;background:transparent;font-size:16px}
+input.win-text:focus{outline:0;box-shadow:inset 0 -2px 0 var(--ink)}
+.win-ro{flex:1;min-width:0;padding-block:12px;overflow-wrap:anywhere}
+.win-del{flex:none;width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.win-del:active{background:var(--surface-2)}
+.win-del svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round}
+.wins-empty{color:var(--muted);font-size:15px;padding:12px 0}
+.wk-group + .wk-group{margin-top:10px}
+.wk-group ul{list-style:none;margin:0;padding:0}
+.wk-group-h{width:100%;display:flex;justify-content:space-between;align-items:center;border:0;background:var(--surface-2);border-radius:10px;
+  padding:8px 12px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.wk-group-h .n{font-variant-numeric:tabular-nums}
 .btn.plain{width:100%;background:var(--surface-2);text-align:left;display:flex;align-items:center;justify-content:space-between}
 .menu-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .menu-note{font-size:14px;color:var(--muted);margin:10px 0 0;line-height:1.5}
@@ -285,6 +317,7 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
 </div>
 
 <div class="dock" id="dock">
+  <button type="button" class="ach-btn" id="winsBtn" aria-label="Achievements"><svg viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/></svg><span class="ach-count" id="winsCount" hidden></span></button>
   <div class="live" id="live" hidden>
     <button type="button" class="live-main" id="liveOpen" aria-label="Edit the activity in progress">
       <span class="live-dot" id="liveDot"></span>
@@ -354,6 +387,19 @@ input:focus{outline:2px solid var(--ink);outline-offset:0}
   </div>
   <p class="menu-note" id="statsNote"></p>
   <p class="menu-note">Entries are saved on this phone only. Add the app to your Home Screen (Share → Add to Home Screen) so iOS keeps your data, and export a backup now and then.</p>
+</section>
+
+<section class="sheet" id="winsSheet" role="dialog" aria-modal="true" aria-labelledby="winsTitle" hidden>
+  <div class="grab"></div>
+  <div class="sheet-head">
+    <div><h2 id="winsTitle">Achieved today</h2><div class="sheet-sub" id="winsSub"></div></div>
+    <button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <form class="win-add" id="winForm" novalidate>
+    <input type="text" id="winInput" placeholder="What did you get done?" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" aria-label="New achievement">
+    <button type="submit" class="btn primary">Add</button>
+  </form>
+  <ul class="wins" id="winsList"></ul>
 </section>
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
@@ -655,8 +701,81 @@ function render(){
   if (view === "day"){ renderSummary(); renderGrid(); } else renderWeek();
   refreshTitleList();
   renderDock();
+  renderWinsBtn();
   syncTopbarH();
 }
+
+/* ---------- Achievements ---------- */
+// db.wins = {"YYYY-MM-DD": [{id, text}]}
+const STAR = `<svg class="win-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/></svg>`;
+const winsOf = d => (db.wins && db.wins[d]) || [];
+let winsFor = null;        // the day whose list is open, or "week"
+function renderWinsBtn(){
+  const n = view === "week" ? weekDays(day).reduce((a,d) => a + winsOf(d).length, 0) : winsOf(day).length;
+  $("winsCount").hidden = !n;
+  $("winsCount").textContent = n;
+  $("winsBtn").classList.toggle("has", n > 0);
+  $("winsBtn").setAttribute("aria-label", (view === "week" ? "Achievements this week" : "Achievements for this day") + (n ? `, ${n}` : ""));
+}
+function renderWins(){
+  const list = $("winsList");
+  if (winsFor === "week"){
+    const days = weekDays(day), total = days.reduce((a,d) => a + winsOf(d).length, 0);
+    $("winsTitle").textContent = "This week's achievements";
+    $("winsSub").textContent = `${$("wd").textContent} · ${total} total`;
+    $("winForm").hidden = true;
+    list.innerHTML = total
+      ? days.filter(d => winsOf(d).length).map(d => `<li class="wk-group"><button type="button" class="wk-group-h" data-day="${d}"><span>${esc(dayName(d))}</span><span class="n">${winsOf(d).length}</span></button><ul>${
+          winsOf(d).map(w => `<li class="win">${STAR}<span class="win-ro">${esc(w.text)}</span></li>`).join("")}</ul></li>`).join("")
+      : `<li class="wins-empty">Nothing added this week yet. In Day view, tap the star to add what you got done.</li>`;
+    return;
+  }
+  const d = winsFor, items = winsOf(d);
+  $("winsTitle").textContent = d === today() ? "Achieved today" : "Achieved";
+  $("winsSub").textContent = (d === today() ? "" : dayName(d) + " · ") + `${items.length} ${items.length === 1 ? "thing" : "things"}`;
+  $("winForm").hidden = false;
+  list.innerHTML = items.length
+    ? items.map(w => `<li class="win" data-id="${w.id}">${STAR}<input type="text" class="win-text" value="${esc(w.text)}" aria-label="Achievement" enterkeyhint="done" autocomplete="off"><button type="button" class="win-del" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></li>`).join("")
+    : `<li class="wins-empty">Nothing yet. Add the first thing you got done${d === today() ? " today" : ""}.</li>`;
+}
+function setWins(d, items){
+  db.wins = db.wins || {};
+  if (items.length) db.wins[d] = items; else delete db.wins[d];
+  save(); renderWinsBtn();
+}
+$("winsBtn").addEventListener("click", () => {
+  winsFor = view === "week" ? "week" : day;
+  $("winInput").value = "";
+  renderWins();
+  openSheet($("winsSheet"));
+});
+$("winForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = $("winInput").value.trim(); if (!v || winsFor === "week") return;
+  setWins(winsFor, winsOf(winsFor).concat({id:uid(), text:v}));
+  $("winInput").value = "";
+  renderWins();
+  $("winInput").focus();
+});
+$("winsList").addEventListener("change", e => {
+  const inp = e.target.closest(".win-text"); if (!inp) return;
+  const id = inp.closest(".win").dataset.id, v = inp.value.trim();
+  setWins(winsFor, v ? winsOf(winsFor).map(w => w.id === id ? {...w, text:v} : w) : winsOf(winsFor).filter(w => w.id !== id));
+  if (!v) renderWins();
+});
+$("winsList").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.closest(".win-text")){ e.preventDefault(); e.target.blur(); } });
+$("winsList").addEventListener("click", e => {
+  const del = e.target.closest(".win-del");
+  if (del){
+    const d = winsFor, snap = JSON.stringify(db), id = del.closest(".win").dataset.id;
+    setWins(d, winsOf(d).filter(w => w.id !== id));
+    renderWins();
+    toast("Removed", "Undo", () => { db = JSON.parse(snap); save(); renderWinsBtn(); if (openSheetEl === $("winsSheet")) renderWins(); });
+    return;
+  }
+  const h = e.target.closest(".wk-group-h");
+  if (h){ closeSheet(); setView("day", h.dataset.day); }
+});
 
 function renderDock(){
   const r = db.running;
@@ -1082,8 +1201,17 @@ $("importFile").addEventListener("change", e => {
         cur.sort((a,b) => a.start - b.start);
         if (!cur.length) delete db.days[d];
       }
+      if (data.wins && typeof data.wins === "object"){
+        db.wins = db.wins || {};
+        for (const [d, list] of Object.entries(data.wins)){
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !Array.isArray(list)) continue;
+          const cur = db.wins[d] || (db.wins[d] = []), ids = new Set(cur.map(w => w.id));
+          list.forEach(w => { if (w && w.text && !ids.has(w.id)){ cur.push({id:String(w.id || uid()), text:String(w.text)}); added++; } });
+          if (!cur.length) delete db.wins[d];
+        }
+      }
       save(); closeSheet(); render();
-      toast(added ? `Imported ${added} ${added===1?"entry":"entries"}` : "Nothing new in that backup");
+      toast(added ? `Imported ${added} ${added===1?"item":"items"}` : "Nothing new in that backup");
     } catch(_){ toast("That file isn't a Daily Proficiency backup."); }
     e.target.value = "";
   };

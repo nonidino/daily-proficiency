@@ -1,5 +1,5 @@
 // Network-first for the app shell so updates show up right away; cache is the offline fallback.
-const CACHE = "dp-v4";
+const CACHE = "dp-v5";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png"];
 
 self.addEventListener("install", e => {
